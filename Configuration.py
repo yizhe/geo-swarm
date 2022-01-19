@@ -13,26 +13,35 @@ class Configuration:
 		self.torus = torus
 		self.N = N
 		self.M = M
-		self.influence_radius = 2 # make this a class variable later; radius 0 means only self is influenced
+		self.influence_radius = 7 # make this a class variable later; radius 0 means only self is influenced
 		self.agents = {} # map from id to agent itself
+		
 		for agent_id in range(len(agent_locations)):
 			location = self.vertices[agent_locations[agent_id]]
-			agent = Agent(agent_id, self.vertices[agent_locations[agent_id]])
+			agent = Agent(agent_id, location)
 			self.agents[agent_id] = agent
 			location.agents.add(agent)
+
+	# Will need to be made more complex to account for conflicting vertex states
+	def merge(self, local_transitions):
+		global_transition = {}
+		for local_transition in local_transitions:
+			for key in local_transition.keys():
+				global_transition[key] = local_transition[key]
+		return global_transition
 
 	def generate_transition(self):
 		# pool = mp.Pool(mp.cpu_count())
 		# transitories = [pool.apply(self.vertex_transition, args = (row, col)) for row in range(N) for col in range (M)]
 		# pool.close()
-		transitories = [self.vertex_transition(row, col) for row in range(self.N) for col in range (self.M)]
+
+		vertex_transitions = []
+		for row in range(self.N):
+			for col in range(self.M):
+				vertex_transitions.append(self.vertex_transition(row, col))
 
 		#Merge all the local transitions
-		global_transition = {}
-		for local_transition in transitories:
-			for key in local_transition.keys():
-				global_transition[key] = local_transition[key]
-		return global_transition
+		return self.merge(vertex_transitions)
 
 	"""
 	thought: what if we are doing something like foraging and both agents are trying to take an object.
@@ -45,19 +54,21 @@ class Configuration:
 		vertex = self.vertices[(row,col)]
 
 		neighboring_agents = []
-		for row in range(vertex.row-self.influence_radius,vertex.row+self.influence_radius+1):
-			for col in range(vertex.col-self.influence_radius, vertex.col-self.influence_radius+1):
+		for n_row in range(vertex.row-self.influence_radius,vertex.row+self.influence_radius+1):
+			for n_col in range(vertex.col-self.influence_radius, vertex.col+self.influence_radius+1):
+				#if n_row == row and n_col == col: continue
+
 				local_agents = []
 
 				if self.torus:
-					local_agents = self.vertices[(row%self.N, col%self.M)].agents
+					local_agents = self.vertices[(n_row%self.N, n_col%self.M)].agents
 					
 				else:
-					if row >= 0 and row < self.N and col >= 0 and col < self.M:
-						local_agents = self.vertices[(row,col)].agents
-				print(len(local_agents))
+					if n_row >= 0 and n_row < self.N and n_col >= 0 and n_col < self.M:
+						local_agents = self.vertices[(n_row,n_col)].agents
 				for agent in local_agents:
 					neighboring_agents.append(agent)
+
 		transitions = {}
 		for agent in vertex.agents:
 			transitions[agent.id] = agent.transition(neighboring_agents)
@@ -73,7 +84,7 @@ class Configuration:
 			movement_dir = transition[agent_id][1]
 
 			# Erase agent from current location
-			agent.location.agents.remove(agent)
+			curr_vertex.agents.remove(agent)
 
 			# S means stay at the same location
 			if movement_dir == "S":

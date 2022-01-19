@@ -29,7 +29,11 @@ class ViewController:
 		for row in range(0, self.configuration.N):
 			for col in range(0, self.configuration.M):
 				rect = pygame.Rect(col*self.VERTEX_SIZE+1, row*self.VERTEX_SIZE+1, self.VERTEX_SIZE-2, self.VERTEX_SIZE-2)
-				if len(self.configuration.vertices[(row, col)].agents) > 0:
+				if len(self.configuration.vertices[(row, col)].agents) > 10:
+					pygame.draw.rect(self.SCREEN, (255, 0, 0), rect, 0)
+				elif len(self.configuration.vertices[(row, col)].agents) > 5:
+					pygame.draw.rect(self.SCREEN, (255, 255, 0), rect, 0)
+				elif len(self.configuration.vertices[(row, col)].agents) > 0:
 					pygame.draw.rect(self.SCREEN, self.GREEN, rect, 0)
 				else:
 					pygame.draw.rect(self.SCREEN, self.WHITE, rect, 0)

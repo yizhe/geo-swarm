@@ -1,5 +1,5 @@
 from AgentState import AgentState
-from random import randint
+import random
 
 class Agent:
 	def __init__(self,id, vertex):
@@ -23,28 +23,29 @@ class Agent:
 		# Depends on the application
 		direction_map = {0:"S", 1:"L", 2:"R", 3:"U", 4:"D"}
 
-		# Try to cluster
+		# Try to spread out
 		if len(nearby_agents) == 0:
 			return self.state, "S"
-
 		total_dist = 0
 		for agent in nearby_agents:
-			total_dist += abs(self.location.row-agent.location.row)
-			total_dist += abs(self.location.col-agent.location.col)
+			total_dist += min(abs(self.location.row-agent.location.row), 50-abs(self.location.row-agent.location.row))
+			total_dist += min(abs(self.location.col-agent.location.col), 50-abs(self.location.col-agent.location.col))
 
-		best_move = "S"
-		best_distance = 0
-
+		best_moves = []
+		best_distance = 100000
+		print("hi")
 		for direction in direction_map.values():
 			new_loc = self.get_coords_from_movement(direction, self.location.row, self.location.col)
 
 			dist = 0
 			for agent in nearby_agents:
-				dist += abs(new_loc[0]-agent.location.row)+abs(new_loc[1]-agent.location.row)
-			if dist > best_distance:
+				dist += min(abs(new_loc[0]-agent.location.row), 50-abs(new_loc[0]-agent.location.row))+min(abs(new_loc[1]-agent.location.col), 50-abs(new_loc[1]-agent.location.col))
+			if dist < best_distance:
 				best_distance = dist
-				best_move = direction
-		return self.state, best_move
+				best_moves = [direction]
+			if dist == best_distance:
+				best_moves.append(direction)
+		return self.state, random.choice(best_moves)
 
 		# Random direction movement
 		# return self.state, direction[randint(0,4)] 
