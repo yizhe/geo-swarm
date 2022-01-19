@@ -10,7 +10,7 @@ num_agents = 50
 def main():
     agent_locations = []
     for i in range(num_agents):
-        agent_locations.append((randint(0, N-1), randint(0, M-1)))
+        agent_locations.append((randint(0, M-1), randint(0, N-1)))
         #agent_locations.append((25, 25))
     configuration  = Configuration(agent_locations, N, M, True)
     vc = ViewController(configuration)

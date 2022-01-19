@@ -7,9 +7,9 @@ class Configuration:
 	def __init__(self, agent_locations, N, M, torus=False):
 		# Create all vertices
 		self.vertices = {}
-		for row in range(N):
-			for col in range(M):
-				self.vertices[(row, col)] = Vertex(row,col)
+		for x in range(M):
+			for y in range(N):
+				self.vertices[(x, y)] = Vertex(x,y)
 		self.torus = torus
 		self.N = N
 		self.M = M
@@ -36,9 +36,9 @@ class Configuration:
 		# pool.close()
 
 		vertex_transitions = []
-		for row in range(self.N):
-			for col in range(self.M):
-				vertex_transitions.append(self.vertex_transition(row, col))
+		for x in range(self.M):
+			for y in range(self.N):
+				vertex_transitions.append(self.vertex_transition(x,y))
 
 		#Merge all the local transitions
 		return self.merge(vertex_transitions)
@@ -50,22 +50,22 @@ class Configuration:
 	TODO: incorporate changes to vertex state.
 	TODO: incorpoate message sending
 	"""
-	def vertex_transition(self,row, col):
-		vertex = self.vertices[(row,col)]
+	def vertex_transition(self,x,y):
+		vertex = self.vertices[(x,y)]
 
 		neighboring_agents = []
-		for n_row in range(vertex.row-self.influence_radius,vertex.row+self.influence_radius+1):
-			for n_col in range(vertex.col-self.influence_radius, vertex.col+self.influence_radius+1):
+		for nx in range(vertex.x-self.influence_radius,vertex.x+self.influence_radius+1):
+			for ny in range(vertex.y-self.influence_radius, vertex.y+self.influence_radius+1):
 				#if n_row == row and n_col == col: continue
 
 				local_agents = []
 
 				if self.torus:
-					local_agents = self.vertices[(n_row%self.N, n_col%self.M)].agents
+					local_agents = self.vertices[(nx%self.M, ny%self.N)].agents
 					
 				else:
-					if n_row >= 0 and n_row < self.N and n_col >= 0 and n_col < self.M:
-						local_agents = self.vertices[(n_row,n_col)].agents
+					if nx >= 0 and nx < self.M and ny >= 0 and ny < self.N:
+						local_agents = self.vertices[(nx,ny)].agents
 				for agent in local_agents:
 					neighboring_agents.append(agent)
 
@@ -90,25 +90,25 @@ class Configuration:
 			if movement_dir == "S":
 				pass 
 			elif movement_dir == "L":
-				if curr_vertex.col-1 >= 0:
-					agent.location = self.vertices[(curr_vertex.row, curr_vertex.col-1)]
+				if curr_vertex.x-1 >= 0:
+					agent.location = self.vertices[(curr_vertex.x-1, curr_vertex.y)]
 				elif self.torus:
-					agent.location = self.vertices[(curr_vertex.row, (curr_vertex.col-1)%self.M)]
+					agent.location = self.vertices[((curr_vertex.x-1)%self.M, curr_vertex.y)]
 			elif movement_dir == "R":
-				if curr_vertex.col+1 < self.M:
-					agent.location = self.vertices[(curr_vertex.row, curr_vertex.col+1)]
+				if curr_vertex.x+1 < self.M:
+					agent.location = self.vertices[(curr_vertex.x+1, curr_vertex.y)]
 				elif self.torus:
-					agent.location = self.vertices[(curr_vertex.row, (curr_vertex.col+1)%self.M)]
-			elif movement_dir == "U":
-				if curr_vertex.row-1 >= 0:
-					agent.location = self.vertices[(curr_vertex.row-1, curr_vertex.col)]
-				elif self.torus:
-					agent.location = self.vertices[((curr_vertex.row-1)%self.N, curr_vertex.col)]
+					agent.location = self.vertices[((curr_vertex.x+1)%self.M, curr_vertex.y)]
 			elif movement_dir == "D":
-				if curr_vertex.row+1 < self.N:
-					agent.location = self.vertices[(curr_vertex.row+1, curr_vertex.col)]
+				if curr_vertex.y-1 >= 0:
+					agent.location = self.vertices[(curr_vertex.x, curr_vertex.y-1)]
 				elif self.torus:
-					agent.location = self.vertices[((curr_vertex.row+1)%self.N, curr_vertex.col)]
+					agent.location = self.vertices[(curr_vertex.x, (curr_vertex.y-1)%self.N)]
+			elif movement_dir == "U":
+				if curr_vertex.y+1 < self.N:
+					agent.location = self.vertices[(curr_vertex.x, curr_vertex.y+1)]
+				elif self.torus:
+					agent.location = self.vertices[(curr_vertex.x, (curr_vertex.y+1)%self.N)]
 
 			# Add agent to updated location
 			agent.location.agents.add(agent)
