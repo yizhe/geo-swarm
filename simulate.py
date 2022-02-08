@@ -1,18 +1,15 @@
 import pygame
 from ViewController import ViewController
 from Configuration import Configuration
+from constants import TORUS, N, M, NUM_AGENTS
 from random import randint
-
-N = 50
-M = 50
-num_agents = 50
 
 def main():
     agent_locations = []
-    for i in range(num_agents):
+    for i in range(NUM_AGENTS):
         agent_locations.append((randint(0, M-1), randint(0, N-1)))
         #agent_locations.append((25, 25))
-    configuration  = Configuration(agent_locations, N, M, True)
+    configuration  = Configuration(agent_locations, N, M, TORUS)
     vc = ViewController(configuration)
     for step in range(60):
         configuration.transition()

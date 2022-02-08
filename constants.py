@@ -1,0 +1,5 @@
+INFLUENCE_RADIUS = 7
+TORUS = False 
+N = 50
+M = 50
+NUM_AGENTS = 50 

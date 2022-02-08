@@ -1,9 +1,25 @@
 import multiprocessing as mp
 from Agent import Agent
 from Vertex import Vertex
+from geo_utils import generate_local_mapping, get_coords_from_movement
+from res_utils import *
+from constants import INFLUENCE_RADIUS
 
 class Configuration:
-	# Graph is a N by M grid
+	"""
+	Initialize the configuration
+
+	Parameters
+	agent_locations: list
+		list of integers specifying what vertex to initialize each agent in
+	N: int 
+		the height of the configuration
+	M: int
+		the width of the configuration
+	torus: bool
+		True if the grid is a torus, False if we are considering
+		edge effects
+	"""
 	def __init__(self, agent_locations, N, M, torus=False):
 		# Create all vertices
 		self.vertices = {}
@@ -13,7 +29,7 @@ class Configuration:
 		self.torus = torus
 		self.N = N
 		self.M = M
-		self.influence_radius = 7 # make this a class variable later; radius 0 means only self is influenced
+		self.influence_radius = INFLUENCE_RADIUS # make this a class variable later; radius 0 means only self is influenced
 		self.agents = {} # map from id to agent itself
 		
 		for agent_id in range(len(agent_locations)):
@@ -22,100 +38,96 @@ class Configuration:
 			self.agents[agent_id] = agent
 			location.agents.add(agent)
 
-	# Will need to be made more complex to account for conflicting vertex states
-	def merge(self, local_transitions):
-		global_transition = {}
-		for local_transition in local_transitions:
-			for key in local_transition.keys():
-				global_transition[key] = local_transition[key]
-		return global_transition
-
-	def generate_transition(self):
+	"""
+	Generates a global transitory state for the entire configuration 
+	"""
+	def generate_global_transitory(self):
+		# TODO: parallel processing
 		# pool = mp.Pool(mp.cpu_count())
 		# transitories = [pool.apply(self.vertex_transition, args = (row, col)) for row in range(N) for col in range (M)]
 		# pool.close()
 
-		vertex_transitions = []
+		# Break down into local configurations and generate local transitory configurations for each to create global one
+		global_transitory = {}
 		for x in range(self.M):
 			for y in range(self.N):
-				vertex_transitions.append(self.vertex_transition(x,y))
 
-		#Merge all the local transitions
-		return self.merge(vertex_transitions)
+				#Get mapping from local coordinates to each neighboring vertex 
+				local_vertex_mapping = generate_local_mapping(self.vertices[(x,y)], self.influence_radius, self.vertices)
+
+				global_transitory[(x,y)] = self.delta(local_vertex_mapping)
+
+		return global_transitory
 
 	"""
-	thought: what if we are doing something like foraging and both agents are trying to take an object.
-	each agent may have a different proposed state for the vertex, in which case ties are broken randomly
-	agents who do not get their proposed vertex state do not get to change their own state either 
-	TODO: incorporate changes to vertex state.
-	TODO: incorpoate message sending
+	Given a local vertex mapping, generate a proposed new vertex state and 
+	new agent states and directions for each agent in that vertex
+
+	Parameters
+	local_vertex_mapping: dict
+		mapping from local coordinates to the vertices at those coordiantes
 	"""
-	def vertex_transition(self,x,y):
-		vertex = self.vertices[(x,y)]
+	def delta(self,local_vertex_mapping):
+		vertex = local_vertex_mapping[(0,0)]
 
-		neighboring_agents = []
-		for nx in range(vertex.x-self.influence_radius,vertex.x+self.influence_radius+1):
-			for ny in range(vertex.y-self.influence_radius, vertex.y+self.influence_radius+1):
-				#if n_row == row and n_col == col: continue
+		if len(vertex.agents) == 0:
+			return vertex.state, {}
 
-				local_agents = []
-
-				if self.torus:
-					local_agents = self.vertices[(nx%self.M, ny%self.N)].agents
-					
-				else:
-					if nx >= 0 and nx < self.M and ny >= 0 and ny < self.N:
-						local_agents = self.vertices[(nx,ny)].agents
-				for agent in local_agents:
-					neighboring_agents.append(agent)
-
-		transitions = {}
+		# Phase One: Each vertex uses their own transition function to propose a new
+		# vertex state, agent state, and direction of motion 
+		proposed_vertex_states = {}
+		proposed_agent_updates = {}
+		
 		for agent in vertex.agents:
-			transitions[agent.id] = agent.transition(neighboring_agents)
+			proposed_vertex_state, proposed_agent_state, direction = agent.generate_transition(local_vertex_mapping)
 
-		return transitions
+			proposed_vertex_states[agent.id] = proposed_vertex_state
+			proposed_agent_updates[agent.id] = AgentTransition(proposed_agent_state, direction)
 
-	def execute_transition(self,transition):
-		for agent_id in transition.keys():
-			agent = self.agents[agent_id]
-			curr_vertex = agent.location
 
-			agent.state = transition[agent_id][0]
-			movement_dir = transition[agent_id][1]
+		# Phase Two: Use a resolution rule to handle conflicting proposed vertex states
+		new_vertex_state, new_agent_updates = naive_resolution(proposed_vertex_states, proposed_agent_updates)
+		return new_vertex_state, new_agent_updates
 
-			# Erase agent from current location
-			curr_vertex.agents.remove(agent)
+	"""
+	Given the global transitory configuration, update the configuration to the new 
+	global state 
+	"""
+	def execute_transition(self,global_transitory):
+		for x,y in global_transitory.keys():
+			vertex = self.vertices[(x,y)]
+			new_vertex_state, new_agent_updates = global_transitory[(x,y)]
 
-			# S means stay at the same location
-			if movement_dir == "S":
-				pass 
-			elif movement_dir == "L":
-				if curr_vertex.x-1 >= 0:
-					agent.location = self.vertices[(curr_vertex.x-1, curr_vertex.y)]
-				elif self.torus:
-					agent.location = self.vertices[((curr_vertex.x-1)%self.M, curr_vertex.y)]
-			elif movement_dir == "R":
-				if curr_vertex.x+1 < self.M:
-					agent.location = self.vertices[(curr_vertex.x+1, curr_vertex.y)]
-				elif self.torus:
-					agent.location = self.vertices[((curr_vertex.x+1)%self.M, curr_vertex.y)]
-			elif movement_dir == "D":
-				if curr_vertex.y-1 >= 0:
-					agent.location = self.vertices[(curr_vertex.x, curr_vertex.y-1)]
-				elif self.torus:
-					agent.location = self.vertices[(curr_vertex.x, (curr_vertex.y-1)%self.N)]
-			elif movement_dir == "U":
-				if curr_vertex.y+1 < self.N:
-					agent.location = self.vertices[(curr_vertex.x, curr_vertex.y+1)]
-				elif self.torus:
-					agent.location = self.vertices[(curr_vertex.x, (curr_vertex.y+1)%self.N)]
+			# Update vertex state
+			vertex.state = new_vertex_state
 
-			# Add agent to updated location
-			agent.location.agents.add(agent)
+			# Update agents
+			for agent_id in new_agent_updates:
+				agent = self.agents[agent_id]
+				update = new_agent_updates[agent_id]
+				if update != None:
+					# Update agent state 
+					agent.state = update.state
 
+					# Update agent location
+					movement_dir = update.direction
+
+					# Erase agent from current location
+					vertex.agents.remove(agent)
+
+					# Move agent according to direction
+					new_coords = get_coords_from_movement(vertex.x, vertex.y, movement_dir)
+					agent.location = self.vertices[new_coords]
+
+					# Add agent to updated location
+					agent.location.agents.add(agent)
+
+	"""
+	Transition from the current global state into the next one
+	"""
 	def transition(self):
-		transitory_state = self.generate_transition()
-		self.execute_transition(transitory_state)
+		global_transitory = self.generate_global_transitory()
+		self.execute_transition(global_transitory)
 
 
 

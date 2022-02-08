@@ -21,14 +21,14 @@ class ViewController:
 		self.SCREEN.fill(self.WHITE)
 		for x in range(0, self.configuration.M):
 			for y in range(0, self.configuration.N):
-				rect = pygame.Rect(x*self.VERTEX_SIZE, self.WINDOW_HEIGHT-y*self.VERTEX_SIZE, self.VERTEX_SIZE, self.VERTEX_SIZE)
+				rect = pygame.Rect(x*self.VERTEX_SIZE, self.WINDOW_HEIGHT-y*self.VERTEX_SIZE-self.VERTEX_SIZE, self.VERTEX_SIZE, self.VERTEX_SIZE)
 				pygame.draw.rect(self.SCREEN, self.BLACK, rect, 1)
 		pygame.display.update()
 
 	def draw_configuration(self):
 		for x in range(0, self.configuration.M):
 			for y in range(0, self.configuration.N):
-				rect = pygame.Rect(x*self.VERTEX_SIZE+1, self.WINDOW_HEIGHT-y*self.VERTEX_SIZE+1, self.VERTEX_SIZE-2, self.VERTEX_SIZE-2)
+				rect = pygame.Rect(x*self.VERTEX_SIZE+1, self.WINDOW_HEIGHT-y*self.VERTEX_SIZE-self.VERTEX_SIZE+1, self.VERTEX_SIZE-2, self.VERTEX_SIZE-2)
 				if len(self.configuration.vertices[(x,y)].agents) > 10:
 					pygame.draw.rect(self.SCREEN, (255, 0, 0), rect, 0)
 				elif len(self.configuration.vertices[(x,y)].agents) > 5:
