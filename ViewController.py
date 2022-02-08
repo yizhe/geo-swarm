@@ -16,6 +16,7 @@ class ViewController:
 		self.SCREEN = pygame.display.set_mode((self.WINDOW_WIDTH, self.WINDOW_HEIGHT))
 		self.make_grid()
 		
+		self.font = pygame.font.SysFont(None, 20)
 
 	def make_grid(self):
 		self.SCREEN.fill(self.WHITE)
@@ -29,14 +30,18 @@ class ViewController:
 		for x in range(0, self.configuration.M):
 			for y in range(0, self.configuration.N):
 				rect = pygame.Rect(x*self.VERTEX_SIZE+1, self.WINDOW_HEIGHT-y*self.VERTEX_SIZE-self.VERTEX_SIZE+1, self.VERTEX_SIZE-2, self.VERTEX_SIZE-2)
-				if len(self.configuration.vertices[(x,y)].agents) > 10:
+				num_agents = len(self.configuration.vertices[(x,y)].agents)
+				if num_agents > 10:
 					pygame.draw.rect(self.SCREEN, (255, 0, 0), rect, 0)
-				elif len(self.configuration.vertices[(x,y)].agents) > 5:
+				elif num_agents > 5:
 					pygame.draw.rect(self.SCREEN, (255, 255, 0), rect, 0)
-				elif len(self.configuration.vertices[(x,y)].agents) > 0:
+				elif num_agents > 0:
 					pygame.draw.rect(self.SCREEN, self.GREEN, rect, 0)
 				else:
 					pygame.draw.rect(self.SCREEN, self.WHITE, rect, 0)
+				if num_agents > 0:
+					num_agents_text = self.font.render(str(num_agents), True, self.BLACK)
+					self.SCREEN.blit(num_agents_text, (x*self.VERTEX_SIZE+1, self.WINDOW_HEIGHT-y*self.VERTEX_SIZE-self.VERTEX_SIZE+1))
 
 	def update(self):
 		self.draw_configuration()
