@@ -4,6 +4,45 @@ from Vertex import Vertex
 from geo_utils import generate_local_mapping, get_coords_from_movement
 from res_utils import *
 from constants import INFLUENCE_RADIUS
+import time
+
+"""
+Given a local vertex mapping, generate a proposed new vertex state and 
+new agent states and directions for each agent in that vertex
+
+Parameters
+local_vertex_mapping: dict
+	mapping from local coordinates to the vertices at those coordiantes
+"""
+def delta(params):
+	local_vertex_mapping, x, y = params
+	print(x,y)
+	vertex = local_vertex_mapping[(0,0)]
+
+	if len(vertex.agents) == 0:
+		# global_transitory[(x,y)] = vertex.state, {}
+		# return 
+		return x, y, vertex.state, {}
+
+	# Phase One: Each vertex uses their own transition function to propose a new
+	# vertex state, agent state, and direction of motion 
+	proposed_vertex_states = {}
+	proposed_agent_updates = {}
+	
+	for agent in vertex.agents:
+		proposed_vertex_state, proposed_agent_state, direction = agent.generate_transition(local_vertex_mapping)
+
+		proposed_vertex_states[agent.id] = proposed_vertex_state
+		proposed_agent_updates[agent.id] = AgentTransition(proposed_agent_state, direction)
+
+
+	# Phase Two: Use a resolution rule to handle conflicting proposed vertex states
+	new_vertex_state, new_agent_updates = naive_resolution(proposed_vertex_states, proposed_agent_updates)
+
+	# Need x and y for setting the global state for parallel processing
+	# global_transitory[(x,y)] = new_vertex_state, new_agent_updates
+	return x, y, new_vertex_state, new_agent_updates
+	#return
 
 class Configuration:
 	"""
@@ -20,7 +59,7 @@ class Configuration:
 		True if the grid is a torus, False if we are considering
 		edge effects
 	"""
-	def __init__(self, agent_locations, N, M, torus=False):
+	def __init__(self, N, M, torus=False, pool = None):
 		# Create all vertices
 		self.vertices = {}
 		for x in range(M):
@@ -31,24 +70,51 @@ class Configuration:
 		self.M = M
 		self.influence_radius = INFLUENCE_RADIUS # make this a class variable later; radius 0 means only self is influenced
 		self.agents = {} # map from id to agent itself
+		self.pool = pool
+
+
+	def add_agents(self, agent_locations, home_nest): 
 		
 		for agent_id in range(len(agent_locations)):
 			location = self.vertices[agent_locations[agent_id]]
-			agent = Agent(agent_id, location)
+			agent = Agent(agent_id, location, home_nest)
 			self.agents[agent_id] = agent
 			location.agents.add(agent)
 
+	def reset_agent_locations(self, agent_locations, home_nest):
+		for x in range(self.M):
+			for y in range(self.N):
+				self.vertices[(x, y)].agents = set()
+		for agent_id in range(len(agent_locations)):
+			agent = self.agents[agent_id]
+			vertex = self.vertices[agent_locations[agent_id]]
+			vertex.agents.add(agent)
+			agent.location = vertex
 	"""
 	Generates a global transitory state for the entire configuration 
 	"""
 	def generate_global_transitory(self):
-		# TODO: parallel processing
-		# pool = mp.Pool(mp.cpu_count())
-		# transitories = [pool.apply(self.vertex_transition, args = (row, col)) for row in range(N) for col in range (M)]
-		# pool.close()
+		#pool = mp.Pool(mp.cpu_count())
 
 		# Break down into local configurations and generate local transitory configurations for each to create global one
 		global_transitory = {}
+
+		# start = time.time()
+		# params = []
+		# for x in range(self.M):
+		# 	for y in range(self.N):
+		# 		params.append([generate_local_mapping(self.vertices[(x,y)], self.influence_radius, self.vertices), x, y])
+		# print(time.time()-start)
+		# out = self.pool.map(delta, params)
+		# print(time.time()-start)
+		# for x,y, new_vertex_state, new_agent_updates in out:
+		# 	global_transitory[(x,y)] = new_vertex_state, new_agent_updates
+
+		# print(time.time()-start)
+		# pool.close()
+		# pool.join()
+		#start = time.time()
+
 		for x in range(self.M):
 			for y in range(self.N):
 
@@ -56,6 +122,7 @@ class Configuration:
 				local_vertex_mapping = generate_local_mapping(self.vertices[(x,y)], self.influence_radius, self.vertices)
 
 				global_transitory[(x,y)] = self.delta(local_vertex_mapping)
+		#print(time.time()-start)
 
 		return global_transitory
 
@@ -128,6 +195,12 @@ class Configuration:
 	def transition(self):
 		global_transitory = self.generate_global_transitory()
 		self.execute_transition(global_transitory)
+
+	def all_agents_terminated(self):
+		for agent_id in self.agents:
+			if not self.agents[agent_id].terminated:
+				return False
+		return True
 
 
 

@@ -23,7 +23,7 @@ class Agent:
 			total_dist += min(abs(self.location.x-agent.location.x), 50-abs(self.location.x-agent.location.x))
 			total_dist += min(abs(self.location.y-agent.location.y), 50-abs(self.location.y-agent.location.y))
 
-		best_moves = ["S"]
+		best_moves = []
 		best_distance = 100000
 		for direction in directions:
 			new_loc = get_coords_from_movement(self.location.x, self.location.y, direction)
@@ -35,6 +35,7 @@ class Agent:
 				best_moves = [direction]
 			if dist == best_distance:
 				best_moves.append(direction)
+		best_moves.append("S")
 		return self.location.state, self.state, random.choice(best_moves)
 
 		# Random direction movement

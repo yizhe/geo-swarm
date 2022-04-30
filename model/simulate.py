@@ -9,7 +9,8 @@ def main():
     for i in range(NUM_AGENTS):
         agent_locations.append((randint(0, M-1), randint(0, N-1)))
         #agent_locations.append((25, 25))
-    configuration  = Configuration(agent_locations, N, M, TORUS)
+    configuration  = Configuration(N, M, TORUS)
+    configuration.add_agents(agent_locations)
     vc = ViewController(configuration)
     for step in range(60):
         configuration.transition()
