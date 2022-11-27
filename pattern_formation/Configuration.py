@@ -1,5 +1,5 @@
 import multiprocessing as mp
-from SpreadAgent import SpreadAgent
+from SimplePatternAgent import SimplePatternAgent
 from Vertex import Vertex
 from geo_utils import generate_local_mapping, get_coords_from_movement
 from res_utils import *
@@ -21,7 +21,7 @@ class Configuration:
 		True if the grid is a torus, False if we are considering
 		edge effects
 	"""
-	def __init__(self, Y_MAX, X_MAX, PATTERN=set(), torus=False):
+	def __init__(self, Y_MAX, X_MAX, PATTERN=[], torus=False):
 		# Create all vertices
 		self.vertices = {}
 		for x in range(X_MAX):
@@ -38,7 +38,7 @@ class Configuration:
 	def add_agents(self, agent_locations): 
 		for agent_id in range(len(agent_locations)):
 			location = self.vertices[agent_locations[agent_id]]
-			agent = SpreadAgent(agent_id, location)
+			agent = SimplePatternAgent(agent_id, location, self.pattern)
 			self.agents[agent_id] = agent
 			location.agents.add(agent)
 	"""
