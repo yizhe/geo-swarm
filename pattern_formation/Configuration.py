@@ -1,9 +1,10 @@
 import multiprocessing as mp
-from Agent import Agent
+from SpreadAgent import SpreadAgent
 from Vertex import Vertex
 from geo_utils import generate_local_mapping, get_coords_from_movement
 from res_utils import *
 from constants import INFLUENCE_RADIUS
+from constants import PATTERN
 
 class Configuration:
 	"""
@@ -20,7 +21,7 @@ class Configuration:
 		True if the grid is a torus, False if we are considering
 		edge effects
 	"""
-	def __init__(self, Y_MAX, X_MAX, torus=False):
+	def __init__(self, Y_MAX, X_MAX, PATTERN=set(), torus=False):
 		# Create all vertices
 		self.vertices = {}
 		for x in range(X_MAX):
@@ -30,13 +31,14 @@ class Configuration:
 		self.Y_MAX = Y_MAX
 		self.X_MAX = X_MAX
 		self.influence_radius = INFLUENCE_RADIUS # make this a class variable later; radius 0 means only self is influenced
+		self.pattern = PATTERN
 		self.agents = {} # map from id to agent itself
 
 
 	def add_agents(self, agent_locations): 
 		for agent_id in range(len(agent_locations)):
 			location = self.vertices[agent_locations[agent_id]]
-			agent = Agent(agent_id, location)
+			agent = SpreadAgent(agent_id, location)
 			self.agents[agent_id] = agent
 			location.agents.add(agent)
 	"""

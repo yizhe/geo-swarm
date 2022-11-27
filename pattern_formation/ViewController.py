@@ -5,6 +5,7 @@ class ViewController:
 	BLACK = (0, 0, 0)
 	WHITE = (255, 255, 255)
 	GREEN = (0, 200, 0)
+	ORANGE = (255, 191, 0)
 	VERTEX_SIZE = 20
 	FPS = 2
 
@@ -37,6 +38,8 @@ class ViewController:
 					pygame.draw.rect(self.SCREEN, (255, 255, 0), rect, 0)
 				elif num_agents > 0:
 					pygame.draw.rect(self.SCREEN, self.GREEN, rect, 0)
+				elif (x,y) in self.configuration.pattern:
+					pygame.draw.rect(self.SCREEN, self.ORANGE, rect, 0)
 				else:
 					pygame.draw.rect(self.SCREEN, self.WHITE, rect, 0)
 				if num_agents > 0:
