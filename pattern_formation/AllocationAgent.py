@@ -1,6 +1,7 @@
 from Agent import Agent
 from geo_utils import directions, get_coords_from_movement
 import random
+import constants
 
 
 # trivial implementation: 
@@ -13,6 +14,7 @@ class AllocationAgent(Agent):
 		self.target = None
 		self.taken = {}
 		self.finished = 0
+		self.uid = random.randint(0,1000000)
 
 	def check_conflict(self, msg):
 		for i in self.msgs:
@@ -21,6 +23,9 @@ class AllocationAgent(Agent):
 		return False
 
 	def generate_transition(self,local_vertex_mapping):
+		'''
+		if self.finished:
+			return self.location.state, self.state, None
 		nearby_agents = []
 		ownid = 0
 		for dx, dy in local_vertex_mapping.keys():
@@ -67,7 +72,43 @@ class AllocationAgent(Agent):
 				occupied[i[1]] = i[2]
 				assigned[i[2]] = i[1]
 		self.target = self.pattern[assigned[ownid]]
-		
+		'''
+		if self.finished:
+			return self.location.state, self.state, None
+		dists = []
+		for id, i in enumerate(self.pattern):
+			d = abs(self.location.x-i[0]) + abs(self.location.y-i[1])
+			dists.append((d, id))
+		dists = sorted(dists)
+
+		nearby_agents = []
+		for dx, dy in local_vertex_mapping.keys():
+			vertex = local_vertex_mapping[(dx,dy)]
+			for agent in vertex.agents:
+				if self != agent:
+					nearby_agents.append(agent)
+
+		if dists[0][0] == 0:
+			minid = 10000000
+			for agent in nearby_agents:
+				if agent.location.x == self.pattern[dists[0][1]][0] and agent.location.y == self.pattern[dists[0][1]][1]:
+					if agent.finished:
+						minid = 0
+					minid = min(minid, agent.uid)
+			if minid > self.uid:
+				self.finished = True
+				return self.location.state, self.state, None
+		now = 0
+		flag = True
+		while flag:
+			flag = False
+			for agent in nearby_agents:
+				if agent.location.x == self.pattern[dists[now][1]][0] and agent.location.y == self.pattern[dists[now][1]][1]:
+					now += 1
+					flag = True
+					break
+
+		self.target = self.pattern[dists[now][1]]
 		best_move = None
 		best_distance = 100000
 		for direction in directions:
