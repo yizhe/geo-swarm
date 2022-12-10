@@ -1,5 +1,6 @@
 import multiprocessing as mp
 from SimplePatternAgent import SimplePatternAgent
+from AllocationAgent import AllocationAgent
 from Vertex import Vertex
 from geo_utils import generate_local_mapping, get_coords_from_movement
 from res_utils import *
@@ -38,7 +39,8 @@ class Configuration:
 	def add_agents(self, agent_locations): 
 		for agent_id in range(len(agent_locations)):
 			location = self.vertices[agent_locations[agent_id]]
-			agent = SimplePatternAgent(agent_id, location, self.pattern)
+			#agent = SimplePatternAgent(agent_id, location, self.pattern)
+			agent = AllocationAgent(agent_id, location, self.pattern)
 			self.agents[agent_id] = agent
 			location.agents.add(agent)
 	"""
