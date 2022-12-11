@@ -12,32 +12,42 @@ class SimplePatternAgent(Agent):
 		super().__init__(id, vertex)
 		self.pattern = deepcopy(pattern)
 		self.finished = False
-		self.destination = self.pick_destination()
+		self.destination = None
+		self.pick_destination(self.pattern)
 
 	def generate_transition(self,local_vertex_mapping):
 		# Do nothing when finished
-		if (self.destination == None or self.finished == True):
+		if self.finished == True:
 			return self.location.state, self.state, "S"
-		dx = self.destination[0] - self.location.x
-		dy = self.destination[1] - self.location.y
-		# When close to target
-		if (abs(dx) <= INFLUENCE_RADIUS and abs(dy) <= INFLUENCE_RADIUS):
-			target_vertex = local_vertex_mapping[(dx, dy)] 
-			agent_status_at_target = [agent.finished for agent in target_vertex.agents]
-			if any(agent_status_at_target):
-				self.change_destination()
-			# At target
-			if (dx == 0 and dy == 0):
-				print("Agent ", self.id, "arrives at ", self.destination)
-				count = len(target_vertex.agents) 
-				if count == 1:
-					print("Agent ", self.id, "is done!")
-					self.finished = True
-					return self.location.state, self.state, "S"
-				elif random.random() < 1/count:
-					return self.location.state, self.state, "S"
-				else:
-					return self.location.state, self.state, random.choice(["U", "D", "L", "R"])
+		# check all destinations
+		taken_destination = []
+		for p in self.pattern:
+			dx = p[0] - self.location.x
+			dy = p[1] - self.location.y
+			if (abs(dx) <= INFLUENCE_RADIUS and abs(dy) <= INFLUENCE_RADIUS):
+				p_vertex = local_vertex_mapping[(dx, dy)] 
+				agent_finish_at_p = [agent.finished for agent in p_vertex.agents]
+				agent_ids = [agent.id for agent in p_vertex.agents]
+				if (len(agent_finish_at_p) > 0 and any(agent_finish_at_p)):
+					taken_destination.append(p)
+		for taken_p in taken_destination:
+			self.pattern.remove(taken_p)
+		if (self.destination not in self.pattern):
+			self.pick_destination(self.pattern)
+
+		# When at target
+		if (self.destination[0] == self.location.x and self.destination[1] == self.location.y ):
+			current_vertex = local_vertex_mapping[(0, 0)] 
+			print("Agent ", self.id, "arrives at ", self.destination)
+			count = len(current_vertex.agents) 
+			if count == 1:
+				print("Agent ", self.id, "is done!")
+				self.finished = True
+				return self.location.state, self.state, "S"
+			elif random.random() < 1/count:
+				return self.location.state, self.state, "S"
+			else:
+				return self.location.state, self.state, random.choice(["U", "D", "L", "R"])
 		#Move to target
 		possible_moves = []
 		if self.location.x < self.destination[0]:
@@ -50,24 +60,13 @@ class SimplePatternAgent(Agent):
 			possible_moves.append("D")
 		return self.location.state, self.state, random.choice(possible_moves)
 
-	def change_destination(self):
-		print("Agent ", self.id, "changes destination from ", self.destination)
-		#try:
-		self.pattern.remove(self.destination)
-		#except ValueError:
-		#	print(self.id)
-		#	print(self.destination)
-		#	print(self.pattern)
-		self.destination = self.pick_destination()
-		print("Agent ", self.id, "changes destination to ", self.destination)
-
-	def pick_destination(self):
+	def pick_destination(self, pattern):
 		min_dist = 100000
-		estination = None
-		for p in self.pattern:
+		self.destination = None
+		for p in pattern:
 			dist = abs(p[0] - self.location.x) + abs(p[1] - self.location.y)
 			if dist < min_dist:
 				min_dist = dist
-				destination = p
-		return destination
+				self.destination = p
+		print("Agent ", self.id, "chooses destination to ", self.destination)
 
