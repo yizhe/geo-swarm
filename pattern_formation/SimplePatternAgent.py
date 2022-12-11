@@ -61,12 +61,11 @@ class SimplePatternAgent(Agent):
 		return self.location.state, self.state, random.choice(possible_moves)
 
 	def pick_destination(self, pattern):
-		min_dist = 100000
+		if len(pattern) == 0:
+			return
 		self.destination = None
-		for p in pattern:
-			dist = abs(p[0] - self.location.x) + abs(p[1] - self.location.y)
-			if dist < min_dist:
-				min_dist = dist
-				self.destination = p
+		dist_l = [abs(p[0] - self.location.x) + abs(p[1] - self.location.y) for p in pattern]
+		weight_l = [1/d for d in dist_l]
+		self.destination = random.choices(pattern, weights=weight_l)[0]
 		print("Agent ", self.id, "chooses destination to ", self.destination)
 

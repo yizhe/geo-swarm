@@ -11,7 +11,7 @@ class AllocationAgent(Agent):
 	def __init__(self,id, vertex, pattern=[]):
 		super().__init__(id, vertex)
 		self.pattern = pattern
-		self.target = None
+		self.destination = None
 		self.taken = {}
 		self.finished = 0
 		self.uid = random.randint(0,1000000)
@@ -71,7 +71,7 @@ class AllocationAgent(Agent):
 			if (i[1] not in occupied.keys()) and (i[2] not in assigned.keys()):
 				occupied[i[1]] = i[2]
 				assigned[i[2]] = i[1]
-		self.target = self.pattern[assigned[ownid]]
+		self.destination = self.pattern[assigned[ownid]]
 		'''
 		if self.finished:
 			return self.location.state, self.state, None
@@ -97,6 +97,7 @@ class AllocationAgent(Agent):
 					minid = min(minid, agent.uid)
 			if minid > self.uid:
 				self.finished = True
+				print(self.id, "is Done")
 				return self.location.state, self.state, None
 		now = 0
 		flag = True
@@ -108,12 +109,12 @@ class AllocationAgent(Agent):
 					flag = True
 					break
 
-		self.target = self.pattern[dists[now][1]]
+		self.destination = self.pattern[dists[now][1]]
 		best_move = None
 		best_distance = 100000
 		for direction in directions:
 			i = get_coords_from_movement(self.location.x, self.location.y, direction)
-			dist = abs(self.target[0]-i[0])+abs(self.target[1]-i[1])
+			dist = abs(self.destination[0]-i[0])+abs(self.destination[1]-i[1])
 			if dist < best_distance:
 				best_distance = dist
 				best_move = direction

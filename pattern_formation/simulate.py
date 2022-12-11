@@ -8,7 +8,7 @@ import random
 
 def main():
     #agent_locations = simple_random_locations(NUM_AGENTS)
-    agent_locations = connected_locations(NUM_AGENTS, 30, 5)
+    agent_locations = connected_locations(NUM_AGENTS, 10, 10)
     #agent_locations =  [(20, 25), (24, 34), (11, 16), (26, 37), (9, 23), (29, 29), (26, 16), (37, 26), (2, 10)]
     print("Initial locations:", agent_locations)
     configuration  = Configuration(Y_MAX, X_MAX, PATTERN, TORUS)

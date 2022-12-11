@@ -19,11 +19,9 @@ class ConvergeAgent(Agent):
 		self.finished = False
 		self.destination = None
 		self.local_coordinate = (0, 0)
-		self.last_move = "S"
 		self.n = len(self.pattern)
 
 	def generate_transition(self,local_vertex_mapping):
-		self.local_coordinate = get_local_coords_from_movement(self.local_coordinate[0], self.local_coordinate[1], self.last_move)
 		direction = "S"
 		# Do nothing when finished
 		if not self.finished:
@@ -31,7 +29,7 @@ class ConvergeAgent(Agent):
 				direction = self.generate_transition_pattern(local_vertex_mapping)
 			else:
 				direction = self.generate_transition_gather(local_vertex_mapping)
-		self.last_move = direction
+		self.local_coordinate = get_local_coords_from_movement(self.local_coordinate[0], self.local_coordinate[1], direction)
 		return self.location.state, self.state, direction 
 
 	def generate_transition_gather(self, local_vertex_mapping):
@@ -55,7 +53,6 @@ class ConvergeAgent(Agent):
 		dest_x = int(sum(coord[0] for coord in local_agent_dict.keys())/len(local_agent_dict))
 		dest_y = int(sum(coord[1] for coord in local_agent_dict.keys())/len(local_agent_dict))
 		direction = get_direction(0, 0, dest_x, dest_y) 
-		self.last_move = direction
 		return direction
 
 	def generate_transition_pattern(self,local_vertex_mapping):
@@ -82,7 +79,6 @@ class ConvergeAgent(Agent):
 			if count == 1:
 				print(self.id, "done!")
 				self.finished = True
-				self.last_move = "S"
 				return "S"
 			elif random.random() < 1/count:
 				return "S"
@@ -92,13 +88,12 @@ class ConvergeAgent(Agent):
 		return get_direction(self.local_coordinate[0], self.local_coordinate[1], self.destination[0], self.destination[1])
 
 	def pick_destination(self, pattern):
-		min_dist = 100000
+		if len(pattern) == 0:
+			return
 		self.destination = None
-		for p in pattern:
-			dist = abs(p[0] - self.local_coordinate[0]) + abs(p[1] - self.local_coordinate[1])
-			if dist < min_dist:
-				min_dist = dist
-				self.destination = p
+		dist_l = [abs(p[0] - self.location.x) + abs(p[1] - self.location.y) for p in pattern]
+		weight_l = [1/d for d in dist_l]
+		self.destination = random.choices(pattern, weights=weight_l)[0]
 		print("Agent ", self.id, "chooses destination to ", self.destination)
 
 

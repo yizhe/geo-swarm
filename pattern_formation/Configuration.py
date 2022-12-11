@@ -41,8 +41,8 @@ class Configuration:
 		for agent_id in range(len(agent_locations)):
 			location = self.vertices[agent_locations[agent_id]]
 			#agent = SimplePatternAgent(agent_id, location, self.pattern)
-			#agent = AllocationAgent(agent_id, location, self.pattern)
-			agent = ConvergeAgent(agent_id, location, self.pattern)
+			agent = AllocationAgent(agent_id, location, self.pattern)
+			#agent = ConvergeAgent(agent_id, location, self.pattern)
 			self.agents[agent_id] = agent
 			location.agents.add(agent)
 	"""
