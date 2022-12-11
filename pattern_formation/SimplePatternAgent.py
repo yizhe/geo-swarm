@@ -65,7 +65,7 @@ class SimplePatternAgent(Agent):
 			return
 		self.destination = None
 		dist_l = [abs(p[0] - self.location.x) + abs(p[1] - self.location.y) for p in pattern]
-		weight_l = [1/d for d in dist_l]
+		weight_l = [1/d**2 for d in dist_l]
 		self.destination = random.choices(pattern, weights=weight_l)[0]
 		print("Agent ", self.id, "chooses destination to ", self.destination)
 
