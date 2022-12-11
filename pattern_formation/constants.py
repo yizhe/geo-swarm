@@ -1,7 +1,7 @@
-INFLUENCE_RADIUS = 7
+INFLUENCE_RADIUS = 11
 TORUS = False 
-X_MAX = 30
-Y_MAX = 30
+X_MAX = 40
+Y_MAX = 40
 
-PATTERN = [(15,15), (17,17), (19,19), (13,13), (11,11), (13,17), (11,19), (17,13), (19,11)]
+PATTERN = [(5,5), (7,7), (9,9), (3,3), (1,1), (3,7), (1,9), (7,3), (9,1)]
 NUM_AGENTS = len(PATTERN)
