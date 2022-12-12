@@ -39,21 +39,31 @@ class ConvergeAgent(Agent):
 			a_num = len(local_vertex_mapping[coord].agents)
 			if a_num > 0:
 				local_agent_dict[coord] = a_num
+		min_x = min(c[0] for c in local_agent_dict.keys())
+		min_y = min(c[1] for c in local_agent_dict.keys())
+		max_x = max(c[0] for c in local_agent_dict.keys())
+		max_y = max(c[1] for c in local_agent_dict.keys())
+
 		if sum(local_agent_dict.values()) == self.n:
-			min_x = min(c[0] for c in local_agent_dict.keys())
-			min_y = min(c[1] for c in local_agent_dict.keys())
-			max_x = max(c[0] for c in local_agent_dict.keys())
-			max_y = max(c[1] for c in local_agent_dict.keys())
 			if max_y - min_y <= INFLUENCE_RADIUS and max_x - min_x <= INFLUENCE_RADIUS:
 				self.gathered = True
 				self.local_coordinate = (-min_x, -min_y)
 				self.pick_destination(self.pattern)
 				print(self.id, "Gathered", self.local_coordinate)
 			return "S"
-		dest_x = int(sum(coord[0] for coord in local_agent_dict.keys())/len(local_agent_dict))
-		dest_y = int(sum(coord[1] for coord in local_agent_dict.keys())/len(local_agent_dict))
-		direction = get_direction(0, 0, dest_x, dest_y) 
-		return direction
+		possible_directions = []
+		if min_x == 0:
+			possible_directions.append("R")
+		if max_x == 0:
+			possible_directions.append("L")
+		if min_y == 0:
+			possible_directions.append("U")
+		if max_y == 0:
+			possible_directions.append("D")
+		#dest_x = int(sum(coord[0] for coord in local_agent_dict.keys())/len(local_agent_dict))
+		#dest_y = int(sum(coord[1] for coord in local_agent_dict.keys())/len(local_agent_dict))
+		#direction = get_direction(0, 0, dest_x, dest_y) 
+		return random.choice(possible_directions) if len(possible_directions) > 0 else "S"
 
 	def generate_transition_pattern(self,local_vertex_mapping):
 		# check all destinations
