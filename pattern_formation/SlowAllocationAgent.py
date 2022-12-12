@@ -7,15 +7,14 @@ import constants
 # trivial implementation: 
 #   no communication
 #   go to a random spot in pattern
-class AllocationAgent(Agent):
+class SlowAllocationAgent(Agent):
 	def __init__(self,id, vertex, pattern=[]):
 		super().__init__(id, vertex)
 		self.pattern = pattern
 		self.target = None
 
 	def generate_transition(self,local_vertex_mapping):
-		if self.finished:
-			return self.location.state, self.state, None
+		
 		all_agents = []
 		for dx, dy in local_vertex_mapping.keys():
 			vertex = local_vertex_mapping[(dx,dy)]
